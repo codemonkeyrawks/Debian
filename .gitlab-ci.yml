@@ -1,0 +1,96 @@
+# GitLab Build: 3/4/2019
+
+# PROD Build - (Prod Branch)
+build-1:
+  stage: build
+  image: debian:stretch
+  script: 
+
+    # --------------------------- #
+    # Step #0 - ShellCheck Install   
+    # --------------------------- #
+    - apt-get update
+    - apt-get install wget xz-utils -y
+    - wget "https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.x86_64.tar.xz"
+    - tar xvf shellcheck-stable.linux.x86_64.tar.xz
+    - cp shellcheck-stable/shellcheck /usr/bin/
+    - shellver="$(shellcheck -V | grep 'version:' | cut -c10-)"
+
+    # --------------------------- #
+    # Step #1 - Gather Files
+    # --------------------------- #
+    - path="/builds/codemonkeyrawks/Debian"
+    - cd $path/client && mkdir check && mv *.sh check
+    - cd $path/server && mkdir check && mv *.sh check
+
+    # --------------------------- #
+    # Step #2 - Check Files
+    # --------------------------- #
+    - (shellcheck $path/client/check/* > $path/client/check/result.txt) &
+    - (shellcheck $path/server/check/* > $path/server/check/result.txt) &
+
+    # --------------------------- #
+    # Step #3 - Print Worker
+    # --------------------------- #
+    - echo "-------------------------------------------" &&
+      echo "Distro   - $(grep PRETTY_NAME /etc/os-release | cut -c 13-)" &&
+      echo "Bash     - $BASH_VERSION" &&
+      echo "Job ID   - $CI_JOB_ID" &&
+      echo "" &&
+      echo "Shell Ver    -- $shellver" &&
+      echo "-------------------------------------------"
+
+    - cat $path/client/check/result.txt
+    - cat $path/server/check/result.txt
+
+  only:
+    - prod
+
+# DEV Branch - (Trunk Branch)
+build-2:
+  stage: build
+  image: debian:stretch
+  script:
+
+    # --------------------------- #
+    # Step #0 - ShellCheck Install   
+    # --------------------------- #
+    - apt-get update
+    - apt-get install wget xz-utils -y
+    - wget "https://storage.googleapis.com/shellcheck/shellcheck-stable.linux.x86_64.tar.xz"
+    - tar xvf shellcheck-stable.linux.x86_64.tar.xz
+    - cp shellcheck-stable/shellcheck /usr/bin/
+    - shellver="$(shellcheck -V | grep 'version:' | cut -c10-)"
+
+    # --------------------------- #
+    # Step #1 - Gather Files
+    # --------------------------- #
+    - path="/builds/codemonkeyrawks/Debian"
+    - cd $path/client && mkdir check && mv *.sh check
+    - cd $path/server && mkdir check && mv *.sh check
+
+    # --------------------------- #
+    # Step #2 - Check Files
+    # --------------------------- #
+    - (shellcheck $path/client/check/* > $path/client/check/result.txt) &
+    - (shellcheck $path/server/check/* > $path/server/check/result.txt) &
+
+    # --------------------------- #
+    # Step #3 - Print Worker
+    # --------------------------- #
+    - echo "-------------------------------------------" &&
+      echo "Distro   - $(grep PRETTY_NAME /etc/os-release | cut -c 13-)" &&
+      echo "Bash     - $BASH_VERSION" &&
+      echo "Job ID   - $CI_JOB_ID" &&
+      echo "" &&
+      echo "Shell Ver    -- $shellver" &&
+      echo "-------------------------------------------"
+
+    - cat $path/client/check/result.txt
+    - cat $path/server/check/result.txt
+
+  only:
+    - dev
+
+# Allow Build Fails
+.allow_failure: true
